@@ -226,6 +226,22 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     private static final int TEXT_COLOR_OPPOSITE = Color.BLACK; 
 
     /**
+     * Distance ring drawing constants
+     */
+	static final int STALLSPEED = 25;
+	static final int COLOR_DISTANCE_RING = Color.rgb(102, 0, 51);
+	static final int COLOR_SPEED_RING =  Color.rgb(178, 255, 102);
+    static final int ring1Size[] = { 1,  2,  5, 10, 20,  40};
+    static final int ring2Size[] = { 2,  5, 10, 20, 40,  80};
+    static final int ring3Size[] = { 5, 10, 20, 40, 80, 160};
+    static final int RINGS_1_2_5     = 0;
+    static final int RINGS_2_5_10    = 1;
+    static final int RINGS_5_10_20   = 2;
+    static final int RINGS_10_20_40  = 3;
+    static final int RINGS_20_40_80  = 4;
+    static final int RINGS_40_80_160 = 5;
+
+    /**
      * @param context
      */
     private void setup(Context context) {
@@ -295,7 +311,6 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         mTextPaintShadow.setStyle(Paint.Style.FILL);
         mShadowPaint = new Paint(mTextPaintShadow);
         mShadowPaint.setShadowLayer(0, 0, 0, 0);
-        mShadowPaint.setColor(TEXT_COLOR_OPPOSITE);
         mShadowPaint.setAlpha(0x7f);
         mShadowPaint.setStyle(Style.FILL);
     }
@@ -1038,7 +1053,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
                      * rectangle, which is itself centered at the end of the
                      * extended runway centerline
 					 */
-					drawShadowedText(canvas, num, mRunwayPaint.getTextSize(),
+					drawShadowedText(canvas, num, mRunwayPaint.getTextSize(), Color.DKGRAY,
 							runwayNumberCoordinatesX,
 							runwayNumberCoordinatesY);
 					if (mTrackUp) {
@@ -1057,25 +1072,24 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      */
     private void drawDistanceRings(Canvas canvas) {
         
-        if((mPref.showDistanceRings() != false) && (null == mPointProjection)) {
-            /*
-             * Find pixels per nautical mile
-             */
-            float sy = mScale.getScaleCorrected();
-
-            float facy = sy / (float)mMovement.getLatitudePerPixel();
-            float pixPerNm = Math.abs(facy * (float)Preferences.NM_TO_LATITUDE);
-            
+        if((mPref.getDistanceRingType() != 0) && (null == mPointProjection)) {
         	/*
         	 *  We are configured to show distance rings and the chart is currently NOT undergoing
         	 *  a "pinch-zoom"
         	 */
-        	float x = (float)(mOrigin.getOffsetX(mGpsParams.getLongitude()));	// Get where we are
+
+        	/*
+             * Find pixels per nautical mile
+             */
+            float sy = mScale.getScaleCorrected();
+            float facy = sy / (float)mMovement.getLatitudePerPixel();
+            float pixPerNm = Math.abs(facy * (float)Preferences.NM_TO_LATITUDE);
+            
+        	float x = (float)(mOrigin.getOffsetX(mGpsParams.getLongitude()));	/* Get where we are */
             float y = (float)(mOrigin.getOffsetY(mGpsParams.getLatitude()));                        
 
         	/*
-        	 *  Using the tables and the radius factor, come up with the radius of the circle to
-        	 *  draw 
+        	 * Conversion factor for pixPerNm in case we are configured in some other units
         	 */
             double fac = 1;
             if(mPref.getDistanceUnit().equals(mContext.getString(R.string.UnitMile))) {
@@ -1086,45 +1100,81 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
             }
 
             /*
-             * Draw 3 rings, 2, 5, and 10.
+             * Set the ring sizes to 2/5/10 nm/mi/km
              */
-        	float ring1R = (float)(pixPerNm * 2 / fac);
-        	float ring2R = (float)(pixPerNm * 5 / fac);
-            float ring3R = (float)(pixPerNm * 10 / fac);
-            float ring4R = (float)(pixPerNm * 20 / fac);
+            int ringScale = RINGS_2_5_10;
+            
+        	/*
+        	 * If we are supposed to dynamically scale the rings, then do that now
+        	 */
+        	if(mPref.getDistanceRingType() == 1) {
+	            float totalZoom = (mScale.getScaleFactor() * mScale.getZoomFactor()) / mScale.getMacroFactor();
+	        	if(totalZoom > 10) {				/* the larger totalZoom is, the more zoomed in we are	*/
+	        		ringScale = RINGS_1_2_5;		
+	        	} else if (totalZoom > 5) {
+	        		ringScale = RINGS_2_5_10;
+	        	} else if (totalZoom > 2.5) {
+	        		ringScale = RINGS_5_10_20;
+	        	} else if (totalZoom > 1.25) {
+	        		ringScale = RINGS_10_20_40;
+	        	}  else if (totalZoom > .625) {
+	        		ringScale = RINGS_20_40_80;
+	        	} else {
+	        		ringScale = RINGS_40_80_160;
+	        	}
+        	}
+        	
+            /*
+             * Calculate the radius of the 3 rings to display
+             */
+        	float ring1R = (float)(pixPerNm * ring1Size[ringScale] / fac);
+        	float ring2R = (float)(pixPerNm * ring2Size[ringScale] / fac);
+            float ring3R = (float)(pixPerNm * ring3Size[ringScale] / fac);
 
         	/*
-        	 *  Draw all 3 circles now
+        	 *  Set the paint accordingly
         	 */
-            mPaint.setStrokeWidth(6);
+            mPaint.setStrokeWidth(8);
             mPaint.setShadowLayer(0, 0, 0, 0);
-        	mPaint.setColor(Color.BLUE);
+        	mPaint.setColor(COLOR_DISTANCE_RING);
         	mPaint.setStyle(Style.STROKE);
         	mPaint.setAlpha(0x7F);
+
+        	/*
+        	 * Draw the 3 distance circles now
+        	 */
         	canvas.drawCircle(x, y, ring1R, mPaint);
         	canvas.drawCircle(x, y, ring2R, mPaint);
             canvas.drawCircle(x, y, ring3R, mPaint);
-            canvas.drawCircle(x, y, ring4R, mPaint);
 
+            /*
+             * Draw the corresponding text if we are dynamic
+             */
+        	if(mPref.getDistanceRingType() == 1) {
+				drawShadowedText(canvas, String.format("%d", ring1Size[ringScale]), 32, COLOR_DISTANCE_RING, x + ring1R, y);
+				drawShadowedText(canvas, String.format("%d", ring2Size[ringScale]), 32, COLOR_DISTANCE_RING, x + ring2R, y);
+				drawShadowedText(canvas, String.format("%d", ring3Size[ringScale]), 32, COLOR_DISTANCE_RING, x + ring3R, y);
+        	}
+        	
         	/*
-        	 *  Draw our "speed ring" in green if we are going faster than stall
-        	 *  speed 
+        	 *  Draw our "speed ring" if we are going faster than stall speed 
         	 */
-        	final int STALLSPEED = 25;
-        	if((mGpsParams.getSpeed() >= STALLSPEED) && (mPref.getTimerRingSize() != 0)) {
+        	double currentSpeed = mGpsParams.getSpeed(); 
+        	if((currentSpeed >= STALLSPEED) && (mPref.getTimerRingSize() != 0)) {
         	    /*
         	     * its / 60 as units is in minutes
         	     */
-	        	double speedRadius = (mGpsParams.getSpeed() / 60) * pixPerNm * mPref.getTimerRingSize() / fac;
-	        	mPaint.setColor(Color.YELLOW);
+	        	double speedRadius = (currentSpeed / 60) * pixPerNm * mPref.getTimerRingSize() / fac;
+	        	mPaint.setColor(COLOR_SPEED_RING);
 	        	canvas.drawCircle(x, y, (float)speedRadius, mPaint);
         	}
 
+        	/*
+        	 * Restore some paint settings back to what they were soas not 
+        	 * to mess things up
+        	 */
             mPaint.setAlpha(0xFF);
             mPaint.setStyle(Style.FILL);
-        	/*
-        	 * No need to draw distance text because its already evident by touch.
-        	 */
         }
     }
 
@@ -1215,10 +1265,11 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      * @param canvas where to draw
      * @param text what to display
      * @param height is the vertical size of the text
+     * @param shadowColor is the color of the shadow of course
      * @param x center position of the text on the canvas
      * @param y top edge of text on the canvas
      */
-    private void drawShadowedText(Canvas canvas, String text, float height, float x, float y) {
+    private void drawShadowedText(Canvas canvas, String text, float height, int shadowColor, float x, float y) {
 
         mTextPaintShadow.setTextSize(height);
 
@@ -1231,6 +1282,8 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     	mShadowBox.right  = mTextSize.right + XMARGIN + x  - (mTextSize.right / 2);
 
     	final int SHADOWRECTRADIUS = 20;
+    	mShadowPaint.setColor(shadowColor);
+    	mShadowPaint.setAlpha(0x80);
     	canvas.drawRoundRect(mShadowBox, SHADOWRECTRADIUS, SHADOWRECTRADIUS, mShadowPaint);
     	canvas.drawText(text,  x - (mTextSize.right / 2), y, mTextPaintShadow);
     }

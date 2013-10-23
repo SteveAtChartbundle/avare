@@ -23,8 +23,8 @@ public class Scale {
     private double mScaleCorrectY;
     private int mMacro;
     
-    private static final double MAX_SCALE = 2;
-    private static final double MIN_SCALE = 0.5; 
+    private static final double MAX_SCALE = 4;
+    private static final double MIN_SCALE = 0.4; 
     private static final int MAX_MACRO = 16;
     private static final int MIN_MACRO = 1;
     
