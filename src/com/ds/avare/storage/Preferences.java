@@ -623,9 +623,13 @@ public class Preferences {
     }
 
     /**
-     * @return whether or not to automatically invoke posting of the tracks file
+     * @return 0-Do not auto post, 1-send in an email, 2-user selects an app to handle KML
      */
-    public boolean autoPostTracks() {
-        return(mPref.getBoolean(mContext.getString(R.string.prefAutoPostTracks), false));
+    public int autoPostTracks() {
+    	try {
+    		return(Integer.parseInt(mPref.getString(mContext.getString(R.string.prefAutoPostTracks), "1")));
+		} catch (Exception x) {
+			return 1;
+		}
     }
 }

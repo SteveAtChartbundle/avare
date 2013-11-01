@@ -207,6 +207,6 @@ Redistribution and use in source and binary forms, with or without modification,
     <string name="AutoPostTracksSubject">&quot;Avare flight tracking data - &quot;</string>
     <string name="prefAutoPostTracks">AutoPostTracks</string>
     <string name="AutoPostTracksLabel">&quot;Automatic Track Post&quot;</string>
-    <string name="AutoPostTracksSummary">&quot;Automatically post the KML tracks file when closed.&quot;</string>
+    <string name="AutoPostTracksSummary">&quot;Select what to do with the KML tracks file when closed.&quot;</string>
     <string name="AutoPostTracksDialogText">&quot;The tracks file %s has been saved.&quot;</string>
 </resources>

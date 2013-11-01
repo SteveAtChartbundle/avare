@@ -143,10 +143,13 @@ authors: zkhan, jlmcgraw
             android:key="@string/TrkUpdShowHistory"
             android:title="@string/TrkUpdShowHistoryLabel"
             android:summary="@string/TrkUpdShowHistorySummary"/>
-        <CheckBoxPreference
+        <ListPreference
+            android:defaultValue="2"
+            android:entries="@array/AutoPostTracksPrompts"
+            android:entryValues="@array/AutoPostTracksValues"
             android:key="@string/prefAutoPostTracks"
-            android:title="@string/AutoPostTracksLabel"
-            android:summary="@string/AutoPostTracksSummary"/>
+            android:summary="@string/AutoPostTracksSummary"
+            android:title="@string/AutoPostTracksLabel" />
         </PreferenceCategory>
     
 </PreferenceScreen>
