@@ -705,14 +705,11 @@ public class LocationActivity extends Activity implements Observer {
 	                	    catch (Exception e) {
 	                	    }
                 		} else {
-                			/* Just display a dialog to the user that the file was saved
+                			/* Just display a toast message to the user that the file was saved
                 			 */
-                			Context context = getApplicationContext();
-                			CharSequence text = String.format(getString(R.string.AutoPostTracksDialogText), fileName);
-                			int duration = Toast.LENGTH_SHORT;
-
-                			Toast toast = Toast.makeText(context, text, duration);
-                			toast.show();
+                			Toast.makeText(getApplicationContext(), 
+                							String.format(getString(R.string.AutoPostTracksDialogText), fileName), 
+                							Toast.LENGTH_SHORT).show();
                 		}
                 	}
                 }
