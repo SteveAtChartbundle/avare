@@ -622,4 +622,10 @@ public class Preferences {
 		}
     }
 
+    /**
+     * @return whether or not to automatically invoke posting of the tracks file
+     */
+    public boolean autoPostTracks() {
+        return(mPref.getBoolean(mContext.getString(R.string.prefAutoPostTracks), false));
+    }
 }

@@ -687,17 +687,33 @@ public class LocationActivity extends Activity implements Observer {
                 	URI fileURI = mService.setTracks(mPref, !mService.getTracks());
                 	if(fileURI != null) {
                 		/* 
-                         * A file was created. Send it as an email attachment
+                         * A file was created. What do we do with it ? 
                          */
-                	    try {
-                    	    Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND); 
-                    	    emailIntent.setType("application/kml");
-                            emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, getString(R.string.Save) + " " + fileURI.getPath()); 
-                    	    emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(fileURI.getPath())));
-                    	    startActivity(Intent.createChooser(emailIntent, "Send mail..."));
-                	    }
-                	    catch (Exception e) {
-                	    }
+            			String fileName = fileURI.getPath().substring((fileURI.getPath().lastIndexOf('/') + 1));
+                		if(mPref.autoPostTracks() == true) {
+                			/*
+                			 * Automatically send it somewhere. Let the user choose where.
+                			 */
+	                	    try {
+	                    	    Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND); 
+	                    	    emailIntent.setType("application/kml");
+	                            emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, getString(R.string.AutoPostTracksSubject) + " " + fileName); 
+	                    	    emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(fileURI.getPath())));
+	                    	    String title = getString(R.string.AutoPostTracksTitle);
+	                    	    startActivity(Intent.createChooser(emailIntent, title));
+	                	    }
+	                	    catch (Exception e) {
+	                	    }
+                		} else {
+                			/* Just display a dialog to the user that the file was saved
+                			 */
+                			Context context = getApplicationContext();
+                			CharSequence text = String.format(getString(R.string.AutoPostTracksDialogText), fileName);
+                			int duration = Toast.LENGTH_SHORT;
+
+                			Toast toast = Toast.makeText(context, text, duration);
+                			toast.show();
+                		}
                 	}
                 }
             }        
